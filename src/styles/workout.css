@@ -1,0 +1,172 @@
+/* Ansicht waehrend des laufenden Workouts. */
+
+.workout-top {
+  position: sticky;
+  top: 0;
+  z-index: 20;
+  background: color-mix(in srgb, var(--bg) 94%, transparent);
+  backdrop-filter: blur(12px);
+  border-bottom: 1px solid var(--border);
+  padding: calc(env(safe-area-inset-top, 0px) + 10px) 16px 10px;
+  margin: 0 -16px var(--gap);
+}
+
+.workout-top__bar {
+  margin-top: 9px;
+}
+
+.set-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 6px 0;
+}
+
+.set-row__index {
+  width: 24px;
+  flex: none;
+  text-align: center;
+  font-size: 0.78rem;
+  font-weight: 700;
+  color: var(--text-faint);
+  font-variant-numeric: tabular-nums;
+}
+
+.set-row[data-done='true'] .set-row__index {
+  color: var(--accent);
+}
+
+.set-input {
+  flex: 1;
+  min-width: 0;
+  min-height: 46px;
+  padding: 10px 8px;
+  border-radius: var(--radius-sm);
+  background: var(--surface-2);
+  border: 1px solid var(--border);
+  color: var(--text);
+  font-size: 16px;
+  font-weight: 620;
+  font-variant-numeric: tabular-nums;
+  text-align: center;
+  appearance: none;
+  -moz-appearance: textfield;
+}
+
+.set-input::-webkit-outer-spin-button,
+.set-input::-webkit-inner-spin-button {
+  appearance: none;
+  margin: 0;
+}
+
+.set-input::placeholder {
+  color: var(--text-faint);
+  font-weight: 500;
+}
+
+.set-row[data-done='true'] .set-input {
+  border-color: var(--accent-line);
+  background: var(--accent-soft);
+}
+
+.set-row__x {
+  color: var(--text-faint);
+  font-size: 0.8rem;
+  flex: none;
+}
+
+.set-check {
+  width: 48px;
+  height: 46px;
+  flex: none;
+  display: grid;
+  place-items: center;
+  border-radius: var(--radius-sm);
+  background: var(--surface-2);
+  border: 1px solid var(--border);
+  color: var(--text-faint);
+  transition: transform 0.12s var(--ease), background 0.15s var(--ease);
+}
+
+.set-check:active {
+  transform: scale(0.92);
+}
+
+.set-check[data-done='true'] {
+  background: var(--accent);
+  border-color: var(--accent);
+  color: var(--accent-text);
+}
+
+/* --------------------------------------------------------------- Rest-Timer */
+
+.rest-bar {
+  position: fixed;
+  left: 50%;
+  transform: translateX(-50%);
+  bottom: calc(env(safe-area-inset-bottom, 0px) + 12px);
+  z-index: 50;
+  width: min(100% - 24px, 596px);
+  display: flex;
+  align-items: center;
+  gap: var(--gap-sm);
+  padding: 10px 12px;
+  border-radius: var(--radius);
+  background: var(--surface-3);
+  border: 1px solid var(--border-strong);
+  box-shadow: var(--shadow);
+  overflow: hidden;
+}
+
+.rest-bar::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: var(--accent-soft);
+  width: var(--rest-progress, 0%);
+  transition: width 0.2s linear;
+}
+
+.rest-bar > * {
+  position: relative;
+}
+
+.rest-bar__time {
+  font-size: 1.6rem;
+  font-weight: 750;
+  letter-spacing: -0.02em;
+  font-variant-numeric: tabular-nums;
+  min-width: 74px;
+}
+
+.rest-bar--work .rest-bar__time {
+  color: var(--accent);
+}
+
+/* Platz schaffen, damit die Timer-Leiste nichts verdeckt. */
+.page--workout {
+  padding-bottom: calc(env(safe-area-inset-bottom, 0px) + 92px);
+}
+
+/* --------------------------------------------------------------- Zusammenfassung */
+
+.rpe-grid {
+  display: grid;
+  grid-template-columns: repeat(5, 1fr);
+  gap: 6px;
+}
+
+.rpe-grid button {
+  min-height: 44px;
+  border-radius: var(--radius-sm);
+  background: var(--surface-2);
+  border: 1px solid var(--border);
+  font-weight: 700;
+  font-variant-numeric: tabular-nums;
+}
+
+.rpe-grid button[aria-pressed='true'] {
+  background: var(--accent);
+  border-color: var(--accent);
+  color: var(--accent-text);
+}
