@@ -17,20 +17,31 @@ export function Sheet({
 }) {
   const panelRef = useRef<HTMLDivElement>(null);
 
+  // onClose kommt von den Aufrufern als Inline-Funktion und ist damit bei
+  // jedem Render neu. Ueber ein Ref gelesen, kann der Effekt unten allein an
+  // `open` haengen - sonst liefe er bei jedem Tastendruck erneut.
+  const onCloseRef = useRef(onClose);
+  onCloseRef.current = onClose;
+
   useEffect(() => {
     if (!open) return;
     const onKey = (event: KeyboardEvent) => {
-      if (event.key === 'Escape') onClose();
+      if (event.key === 'Escape') onCloseRef.current();
     };
     document.addEventListener('keydown', onKey);
     const previousOverflow = document.body.style.overflow;
     document.body.style.overflow = 'hidden';
-    panelRef.current?.focus();
+
+    // Fokus ins Sheet holen, damit Escape und Screenreader greifen - ein Feld
+    // mit autoFocus hat aber Vorrang und darf nicht verdraengt werden.
+    const panel = panelRef.current;
+    if (panel && !panel.contains(document.activeElement)) panel.focus();
+
     return () => {
       document.removeEventListener('keydown', onKey);
       document.body.style.overflow = previousOverflow;
     };
-  }, [open, onClose]);
+  }, [open]);
 
   if (!open) return null;
 

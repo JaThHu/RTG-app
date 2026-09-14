@@ -239,6 +239,7 @@ export function MicroPage() {
                   inputMode="numeric"
                   min={0}
                   value={draft.dailyGoal}
+                  onFocus={(event) => event.target.select()}
                   onChange={(event) => setDraft({ ...draft, dailyGoal: Number(event.target.value) })}
                 />
               </Field>

@@ -105,6 +105,7 @@ export function MorePage() {
               step="15"
               min={0}
               value={settings.defaultRestSeconds}
+              onFocus={(event) => event.target.select()}
               onChange={(event) =>
                 updateSettings({ defaultRestSeconds: Math.max(0, Number(event.target.value) || 0) })
               }

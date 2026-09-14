@@ -284,6 +284,7 @@ export function TestsPage() {
                   type="number"
                   inputMode="decimal"
                   value={draft.goal}
+              onFocus={(event) => event.target.select()}
                   onChange={(event) => setDraft({ ...draft, goal: Number(event.target.value) })}
                 />
               </Field>

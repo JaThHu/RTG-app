@@ -99,6 +99,7 @@ export function ExerciseSheet({
               inputMode="numeric"
               min={1}
               value={draft.sets}
+              onFocus={(event) => event.target.select()}
               onChange={(event) => patch({ sets: num(event.target.value) ?? 1 })}
             />
           </Field>
@@ -109,6 +110,7 @@ export function ExerciseSheet({
               inputMode="numeric"
               placeholder="optional"
               value={draft.targetValue ?? ''}
+              onFocus={(event) => event.target.select()}
               onChange={(event) => patch({ targetValue: num(event.target.value) })}
             />
           </Field>
@@ -124,6 +126,7 @@ export function ExerciseSheet({
                 step="0.5"
                 placeholder="optional"
                 value={draft.targetWeight ?? ''}
+                onFocus={(event) => event.target.select()}
                 onChange={(event) => patch({ targetWeight: num(event.target.value) })}
               />
             </Field>
@@ -135,6 +138,7 @@ export function ExerciseSheet({
               inputMode="numeric"
               step="15"
               value={draft.restSeconds ?? ''}
+              onFocus={(event) => event.target.select()}
               placeholder="0 = keine"
               onChange={(event) => patch({ restSeconds: num(event.target.value) })}
             />
