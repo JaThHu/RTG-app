@@ -57,6 +57,25 @@ export const IconPlus = ({ size = 20, className }: Props) => (
   </svg>
 );
 
+export const IconMinus = ({ size = 20, className }: Props) => (
+  <svg {...base(size, className)}>
+    <path d="M5 12h14" />
+  </svg>
+);
+
+export const IconBell = ({ size = 20, className }: Props) => (
+  <svg {...base(size, className)}>
+    <path d="M6 16.5V11a6 6 0 0 1 12 0v5.5l1.5 2h-15l1.5-2Z" />
+    <path d="M10 20.5a2.1 2.1 0 0 0 4 0" />
+  </svg>
+);
+
+export const IconWeight = ({ size = 20, className }: Props) => (
+  <svg {...base(size, className)}>
+    <path d="M6.5 7.5v9M17.5 7.5v9M3.5 10v4M20.5 10v4M6.5 12h11" />
+  </svg>
+);
+
 export const IconCheck = ({ size = 20, className }: Props) => (
   <svg {...base(size, className)} strokeWidth={2.4}>
     <path d="m4.5 12.5 5 5 10-11" />

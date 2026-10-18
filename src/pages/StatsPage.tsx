@@ -3,8 +3,8 @@ import { Link } from 'react-router-dom';
 import { PageHeader } from '../components/PageHeader';
 import { BarChart, Heatmap } from '../components/Charts';
 import { EmptyState, ProgressBar, SegmentedControl } from '../components/ui';
-import { addDays, formatDurationShort, toISODate } from '../lib/date';
-import { formatDistance, formatSet, formatVolume } from '../lib/format';
+import { addDays, formatDurationShort, formatRelativeDay, toISODate } from '../lib/date';
+import { formatDistance, formatSet, formatVolume, formatWeight } from '../lib/format';
 import {
   activeDays,
   finishedSessions,
@@ -13,6 +13,7 @@ import {
   summary,
   testProgress,
   weeklyBuckets,
+  weightTrends,
 } from '../lib/stats';
 import { useData } from '../lib/store';
 
@@ -34,6 +35,7 @@ export function StatsPage() {
   const sessions = finishedSessions(data);
   const weeks = weeklyBuckets(data, 12);
   const records = personalRecords(data);
+  const weights = weightTrends(data);
   const tests = testProgress(data).filter((t) => t.best);
   const micros = data.micros.filter((m) => !m.archived);
 
@@ -170,6 +172,46 @@ export function StatsPage() {
               </div>
             ))}
           </div>
+        </section>
+      )}
+
+      {weights.length > 0 && (
+        <section className="section">
+          <div className="section__head">
+            <h2>Gewichte</h2>
+            <span className="tiny faint">seit erstem Eintrag</span>
+          </div>
+          <ul className="card card--flush">
+            {weights.map((trend, index) => (
+              <li
+                key={trend.name}
+                className="row"
+                style={{
+                  padding: '11px var(--gap)',
+                  borderTop: index === 0 ? 'none' : '1px solid var(--border)',
+                }}
+              >
+                <span className="grow" style={{ minWidth: 0 }}>
+                  <span className="truncate" style={{ display: 'block' }}>
+                    {trend.name}
+                  </span>
+                  <span className="tiny faint">{formatRelativeDay(trend.date)}</span>
+                </span>
+                {trend.change !== 0 && (
+                  <span
+                    className="small tabular"
+                    style={{ color: trend.change > 0 ? 'var(--accent)' : 'var(--text-faint)' }}
+                  >
+                    {trend.change > 0 ? '+' : '−'}
+                    {formatWeight(Math.abs(trend.change))}
+                  </span>
+                )}
+                <span className="tabular" style={{ fontWeight: 650, minWidth: 64, textAlign: 'right' }}>
+                  {formatWeight(trend.latest)}
+                </span>
+              </li>
+            ))}
+          </ul>
         </section>
       )}
 

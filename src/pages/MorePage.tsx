@@ -3,7 +3,7 @@ import { Link } from 'react-router-dom';
 import { PageHeader } from '../components/PageHeader';
 import { ConfirmSheet, Field, Switch } from '../components/ui';
 import { useToast } from '../components/Toast';
-import { IconChevron, IconTarget } from '../components/Icons';
+import { IconBell, IconChevron, IconTarget } from '../components/Icons';
 import { updateSettings } from '../lib/actions';
 import { dataSummary, exportBackup, importBackup } from '../lib/backup';
 import { replaceAll, useData } from '../lib/store';
@@ -34,6 +34,14 @@ export function MorePage() {
             <span className="small muted">
               {data.tests.length > 0 ? `${data.tests.length} Disziplinen` : 'Anforderungen festlegen'}
             </span>
+          </span>
+          <IconChevron className="faint" />
+        </Link>
+        <Link to="/mehr/erinnerungen" className="list-item">
+          <IconBell />
+          <span className="grow">
+            <strong style={{ display: 'block' }}>Erinnerungen</strong>
+            <span className="small muted">Pause vorbei, Training, Mikro-Übungen</span>
           </span>
           <IconChevron className="faint" />
         </Link>

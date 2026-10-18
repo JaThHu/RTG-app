@@ -59,6 +59,12 @@ export interface SessionExercise {
   targetWeight?: number;
   restSeconds?: number;
   note?: string;
+  /**
+   * Nach dem Workout notiertes Gewicht in kg (Zusatzgewicht bei Klimmzügen,
+   * Rucksack beim Marsch, ...). Bei kind === 'weighted' steht das Gewicht
+   * stattdessen in jedem Satz - dort bleibt dieses Feld leer.
+   */
+  weight?: number;
   sets: SessionSet[];
 }
 
@@ -136,6 +142,16 @@ export interface Settings {
   defaultRestSeconds: number;
   /** Wochentag, an dem die Trainingswoche beginnt (1 = Montag). */
   weekStart: 1 | 7;
+  /** Benachrichtigung, wenn Pause oder Übungs-Countdown im Hintergrund abläuft. */
+  notifyTimer: boolean;
+  /** Push-Erinnerung an Tagen mit geplantem Workout. */
+  remindWorkout: boolean;
+  /** Uhrzeit der Workout-Erinnerung als HH:MM. */
+  remindWorkoutTime: string;
+  /** Push-Erinnerungen an offene Mikro-Tagesziele. */
+  remindMicro: boolean;
+  /** Uhrzeiten der Mikro-Erinnerungen als HH:MM, aufsteigend. */
+  remindMicroTimes: string[];
 }
 
 export interface AppData {
@@ -160,6 +176,11 @@ export const DEFAULT_SETTINGS: Settings = {
   autoRest: true,
   defaultRestSeconds: 90,
   weekStart: 1,
+  notifyTimer: true,
+  remindWorkout: true,
+  remindWorkoutTime: '17:00',
+  remindMicro: true,
+  remindMicroTimes: ['10:00', '14:00', '18:00'],
 };
 
 export function emptyData(): AppData {
