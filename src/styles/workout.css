@@ -148,6 +148,35 @@
   padding-bottom: calc(env(safe-area-inset-bottom, 0px) + 92px);
 }
 
+/* --------------------------------------------------------------- Gewichte */
+
+.weight-row {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 8px 0;
+  border-top: 1px solid var(--border);
+}
+
+.weight-row:first-child {
+  border-top: none;
+  padding-top: 2px;
+}
+
+.weight-row .icon-btn {
+  width: 40px;
+  height: 46px;
+}
+
+.weight-row .icon-btn:disabled {
+  opacity: 0.4;
+}
+
+.weight-row__input {
+  flex: none;
+  width: 72px;
+}
+
 /* --------------------------------------------------------------- Zusammenfassung */
 
 .rpe-grid {

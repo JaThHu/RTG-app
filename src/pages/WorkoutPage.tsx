@@ -1,8 +1,10 @@
-import { useCallback, useRef, useState } from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
 import { Navigate, useNavigate, useParams } from 'react-router-dom';
 import { ExerciseSheet } from '../components/ExerciseSheet';
 import type { ExerciseDraft } from '../components/ExerciseSheet';
 import { SetRow } from '../components/SetRow';
+import { initialWeightDraft, weightChanges, weightExercises, WeightFields } from '../components/WeightFields';
+import type { WeightDraft } from '../components/WeightFields';
 import { ConfirmSheet, ProgressBar, Sheet } from '../components/ui';
 import { useToast } from '../components/Toast';
 import { IconClose, IconPlus, IconTimer, IconTrash } from '../components/Icons';
@@ -13,11 +15,13 @@ import {
   finishSession,
   removeSessionExercise,
   removeSessionSet,
+  setExerciseWeights,
   updateSessionSet,
 } from '../lib/actions';
 import { formatDuration, formatDurationShort, formatRelativeDay } from '../lib/date';
-import { formatSet, formatTarget } from '../lib/format';
+import { formatSet, formatTarget, formatWeight } from '../lib/format';
 import { restDone, tick } from '../lib/feedback';
+import { closeNotifications, showNotification } from '../lib/notifications';
 import { doneSets, lastPerformance, sessionVolume, totalSets } from '../lib/stats';
 import { useData } from '../lib/store';
 import { useCountdown, useElapsed } from '../lib/timers';
@@ -25,7 +29,12 @@ import { useWakeLock } from '../lib/wakeLock';
 import type { SessionExercise, SessionSet } from '../lib/types';
 
 /** Welchen Satz der laufende Countdown betrifft. */
-type TimerContext = { mode: 'rest' } | { mode: 'work'; exerciseId: string; setIndex: number };
+type TimerContext =
+  | { mode: 'rest'; exerciseId?: string }
+  | { mode: 'work'; exerciseId: string; setIndex: number };
+
+/** Tag der Timer-Benachrichtigung - eine neue ersetzt die alte. */
+const TIMER_TAG = 'rtg-timer';
 
 export function WorkoutPage() {
   const { sessionId } = useParams();
@@ -41,6 +50,7 @@ export function WorkoutPage() {
   const [discardOpen, setDiscardOpen] = useState(false);
   const [rpe, setRpe] = useState<number | undefined>();
   const [note, setNote] = useState('');
+  const [weightDraft, setWeightDraft] = useState<WeightDraft>({});
 
   const timerContext = useRef<TimerContext>({ mode: 'rest' });
   const elapsed = useElapsed(session?.startedAt);
@@ -49,19 +59,50 @@ export function WorkoutPage() {
   const onTimerDone = useCallback(() => {
     restDone(settings.timerSound, settings.timerVibrate);
     const context = timerContext.current;
+    const exercise = session?.exercises.find((ex) => ex.id === context.exerciseId);
     if (context.mode === 'work' && session) {
       // Zeit-Übung: Satz mit der abgelaufenen Zeit abhaken.
-      const exercise = session.exercises.find((ex) => ex.id === context.exerciseId);
-      const target = exercise?.targetValue;
       updateSessionSet(session.id, context.exerciseId, context.setIndex, {
         done: true,
-        seconds: exercise?.sets[context.setIndex]?.seconds ?? target,
+        seconds: exercise?.sets[context.setIndex]?.seconds ?? exercise?.targetValue,
       });
     }
+
+    // Ton und Vibration gehen unter, wenn man gerade in einer anderen App ist.
+    if (session && settings.notifyTimer && document.visibilityState === 'hidden') {
+      const next = exercise?.sets.findIndex((set) => !set.done) ?? -1;
+      void showNotification(
+        context.mode === 'work'
+          ? {
+              title: 'Satz geschafft ✓',
+              body: exercise ? `${exercise.name} · Satz ${context.setIndex + 1}` : undefined,
+              tag: TIMER_TAG,
+              path: `/workout/${session.id}`,
+            }
+          : {
+              title: 'Pause vorbei',
+              body:
+                exercise && next >= 0
+                  ? `Weiter: ${exercise.name} · Satz ${next + 1} von ${exercise.sets.length}`
+                  : 'Weiter geht’s.',
+              tag: TIMER_TAG,
+              path: `/workout/${session.id}`,
+            },
+      );
+    }
     timerContext.current = { mode: 'rest' };
-  }, [session, settings.timerSound, settings.timerVibrate]);
+  }, [session, settings.notifyTimer, settings.timerSound, settings.timerVibrate]);
 
   const timer = useCountdown(onTimerDone);
+
+  // Zurück in der App: die Timer-Meldung hat sich erledigt.
+  useEffect(() => {
+    const onVisible = () => {
+      if (document.visibilityState === 'visible') void closeNotifications(TIMER_TAG);
+    };
+    document.addEventListener('visibilitychange', onVisible);
+    return () => document.removeEventListener('visibilitychange', onVisible);
+  }, []);
 
   if (!session) return <Navigate to="/" replace />;
   if (session.finishedAt) return <Navigate to={`/verlauf/${session.id}`} replace />;
@@ -96,7 +137,7 @@ export function WorkoutPage() {
     const rest = exercise.restSeconds ?? 0;
     const isLastSet = index === exercise.sets.length - 1;
     if (settings.autoRest && rest > 0 && !isLastSet) {
-      timerContext.current = { mode: 'rest' };
+      timerContext.current = { mode: 'rest', exerciseId: exercise.id };
       timer.start(rest);
     }
   };
@@ -111,7 +152,13 @@ export function WorkoutPage() {
     addSessionExercise(session.id, draft);
   };
 
+  const openFinish = () => {
+    setWeightDraft(initialWeightDraft(data, session));
+    setFinishOpen(true);
+  };
+
   const finish = () => {
+    setExerciseWeights(session.id, weightChanges(session, weightDraft));
     finishSession(session.id, { rpe, note: note.trim() || undefined });
     toast('Workout gespeichert 💪');
     navigate(`/verlauf/${session.id}`, { replace: true });
@@ -131,7 +178,7 @@ export function WorkoutPage() {
               {session.name}
             </h1>
           </div>
-          <button className="btn btn--primary btn--sm" onClick={() => setFinishOpen(true)}>
+          <button className="btn btn--primary btn--sm" onClick={openFinish}>
             Beenden
           </button>
           <button className="icon-btn" onClick={() => setDiscardOpen(true)} aria-label="Workout verwerfen">
@@ -182,6 +229,7 @@ export function WorkoutPage() {
                 <p className="tiny faint" style={{ marginTop: 4 }}>
                   {formatRelativeDay(last.date)}:{' '}
                   {last.sets.map((set) => formatSet(exercise.kind, set)).join(' · ')}
+                  {last.weight ? ` · ${formatWeight(last.weight)}` : ''}
                 </p>
               )}
 
@@ -219,7 +267,7 @@ export function WorkoutPage() {
                   <button
                     className="btn btn--sm btn--ghost"
                     onClick={() => {
-                      timerContext.current = { mode: 'rest' };
+                      timerContext.current = { mode: 'rest', exerciseId: exercise.id };
                       timer.start(exercise.restSeconds!);
                     }}
                     aria-label="Pause starten"
@@ -290,6 +338,19 @@ export function WorkoutPage() {
             <p className="small muted">
               {total - done} Sätze sind nicht abgehakt. Sie werden nicht mitgezählt.
             </p>
+          )}
+
+          {weightExercises(session).length > 0 && (
+            <div className="field">
+              <span className="field__label">Genutztes Gewicht (kg)</span>
+              <WeightFields
+                data={data}
+                session={session}
+                draft={weightDraft}
+                onChange={(exerciseId, text) => setWeightDraft((current) => ({ ...current, [exerciseId]: text }))}
+              />
+              <span className="tiny faint">Vorausgefüllt mit dem letzten Mal. Leer lassen, wenn ohne Gewicht.</span>
+            </div>
           )}
 
           <div className="field">

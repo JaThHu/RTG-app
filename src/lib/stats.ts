@@ -11,6 +11,16 @@ export function finishedSessions(data: AppData): Session[] {
   return data.sessions.filter(isFinished).sort((a, b) => b.startedAt - a.startedAt);
 }
 
+/** Wochentag ("1" = Montag) -> Namen der Workouts, die an dem Tag im Plan stehen. */
+export function plannedDays(data: AppData): Record<string, string[]> {
+  const days: Record<string, string[]> = {};
+  for (const template of data.templates) {
+    if (template.archived) continue;
+    for (const day of template.weekdays) (days[day] ??= []).push(template.name);
+  }
+  return days;
+}
+
 export function activeSession(data: AppData): Session | undefined {
   return data.sessions.find((s) => !isFinished(s));
 }
@@ -248,7 +258,7 @@ export function lastPerformance(
   data: AppData,
   exerciseName: string,
   excludeSessionId?: string,
-): { date: string; sets: SessionExercise['sets'] } | undefined {
+): { date: string; sets: SessionExercise['sets']; weight?: number } | undefined {
   const needle = exerciseName.toLowerCase();
   const candidates = data.sessions
     .filter((s) => isFinished(s) && s.id !== excludeSessionId)
@@ -256,9 +266,75 @@ export function lastPerformance(
   for (const session of candidates) {
     const match = session.exercises.find((ex) => ex.name.toLowerCase() === needle);
     const done = match?.sets.filter((s) => s.done) ?? [];
-    if (done.length > 0) return { date: toISODate(new Date(session.startedAt)), sets: done };
+    if (match && done.length > 0) {
+      return { date: toISODate(new Date(session.startedAt)), sets: done, weight: match.weight };
+    }
   }
   return undefined;
+}
+
+/* ------------------------------------------------------------------ Gewichte */
+
+/**
+ * Gewicht, mit dem eine Übung gemacht wurde. Bei 'weighted' steht es pro Satz,
+ * dann zählt der schwerste abgehakte Satz - sonst das nach dem Workout notierte.
+ */
+export function exerciseWeight(exercise: SessionExercise): number | undefined {
+  if (exercise.kind !== 'weighted') return exercise.weight;
+  const weights = exercise.sets.filter((s) => s.done && s.weight).map((s) => s.weight!);
+  return weights.length > 0 ? Math.max(...weights) : undefined;
+}
+
+/** Zuletzt genutztes Gewicht einer Übung aus Workouts, die vor `before` begonnen haben. */
+export function lastWeight(
+  data: AppData,
+  exerciseName: string,
+  before: number,
+): { date: string; weight: number } | undefined {
+  const needle = exerciseName.toLowerCase();
+  const candidates = data.sessions
+    .filter((s) => isFinished(s) && s.startedAt < before)
+    .sort((a, b) => b.startedAt - a.startedAt);
+  for (const session of candidates) {
+    for (const exercise of session.exercises) {
+      if (exercise.name.toLowerCase() !== needle) continue;
+      const weight = exerciseWeight(exercise);
+      if (weight) return { date: toISODate(new Date(session.startedAt)), weight };
+    }
+  }
+  return undefined;
+}
+
+export interface WeightTrend {
+  name: string;
+  latest: number;
+  /** ISO-Datum des letzten Eintrags. */
+  date: string;
+  /** Veränderung seit dem ersten Eintrag in kg. */
+  change: number;
+}
+
+/** Gewichtsverlauf je Übungsname, zuletzt trainierte Übungen zuerst. */
+export function weightTrends(data: AppData): WeightTrend[] {
+  const trends = new Map<string, WeightTrend>();
+  const firsts = new Map<string, number>();
+  const sessions = data.sessions.filter(isFinished).sort((a, b) => a.startedAt - b.startedAt);
+
+  for (const session of sessions) {
+    const date = toISODate(new Date(session.startedAt));
+    for (const exercise of session.exercises) {
+      const weight = exerciseWeight(exercise);
+      if (!weight) continue;
+      const key = exercise.name.toLowerCase();
+      const first = firsts.get(key) ?? weight;
+      firsts.set(key, first);
+      trends.set(key, { name: exercise.name, latest: weight, date, change: weight - first });
+    }
+  }
+
+  return [...trends.values()].sort(
+    (a, b) => b.date.localeCompare(a.date) || a.name.localeCompare(b.name, 'de-CH'),
+  );
 }
 
 /* -------------------------------------------------------------------- Tests */

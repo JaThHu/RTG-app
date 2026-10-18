@@ -67,6 +67,19 @@ export function formatDistance(meters: number): string {
   return meters >= 1000 ? `${(meters / 1000).toFixed(2).replace(/\.?0+$/, '')} km` : `${meters} m`;
 }
 
+/** "62.5 kg" - ohne Rundungsartefakte aus +/- 2.5er-Schritten. */
+export function formatWeight(kg: number): string {
+  return `${Math.round(kg * 100) / 100} kg`;
+}
+
+/** Zahl aus einem Eingabefeld, Komma oder Punkt als Dezimaltrenner. Leer bleibt undefined. */
+export function parseDecimal(text: string): number | undefined {
+  const trimmed = text.trim().replace(',', '.');
+  if (trimmed === '') return undefined;
+  const parsed = Number(trimmed);
+  return Number.isFinite(parsed) ? parsed : undefined;
+}
+
 export function formatVolume(kg: number): string {
   if (kg >= 1000) return `${(kg / 1000).toFixed(1)} t`;
   return `${Math.round(kg)} kg`;

@@ -1,0 +1,41 @@
+name: Erinnerungen
+
+# Verschickt die Push-Erinnerungen der App (scripts/send-reminders.mjs).
+# Ohne das Secret RTG_PUSH passiert nichts - den Code dafuer erzeugt die App
+# unter Mehr -> Erinnerungen. Von Hand gestartet ("Run workflow") kommt eine
+# Test-Benachrichtigung.
+
+on:
+  schedule:
+    # Zwei getrennte Eintraege: Daran erkennt das Skript, welchen
+    # Halbstunden-Slot ein Lauf bedient, auch wenn GitHub ihn verspaetet
+    # startet. Minute 7 und 37 statt 0 und 30, weil zur vollen Stunde am
+    # meisten los ist und Laeufe dann am ehesten ausfallen.
+    - cron: '7 * * * *'
+    - cron: '37 * * * *'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: reminders
+  cancel-in-progress: false
+
+jobs:
+  send:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          sparse-checkout: scripts
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+
+      - run: node scripts/send-reminders.mjs
+        env:
+          RTG_PUSH: ${{ secrets.RTG_PUSH }}
+          SCHEDULE: ${{ github.event.schedule }}

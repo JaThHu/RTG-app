@@ -256,6 +256,32 @@ export function finishSession(id: string, patch?: Partial<Session>): void {
   updateSession(id, { ...patch, finishedAt: Date.now() });
 }
 
+/**
+ * Notiert das genutzte Gewicht pro Übung (Übungs-ID -> kg, undefined löscht).
+ * Bei 'weighted' landet es in jedem Satz, damit Volumen und Bestwerte
+ * stimmen - sonst an der Übung selbst.
+ */
+export function setExerciseWeights(sessionId: string, weights: Record<string, number | undefined>): void {
+  if (Object.keys(weights).length === 0) return;
+  update((data) => ({
+    ...data,
+    sessions: data.sessions.map((s) =>
+      s.id === sessionId
+        ? {
+            ...s,
+            exercises: s.exercises.map((ex) => {
+              if (!(ex.id in weights)) return ex;
+              const weight = weights[ex.id];
+              return ex.kind === 'weighted'
+                ? { ...ex, sets: ex.sets.map((set) => ({ ...set, weight })) }
+                : { ...ex, weight };
+            }),
+          }
+        : s,
+    ),
+  }));
+}
+
 /* ------------------------------------------------------------ Mikro-Übungen */
 
 export function createMicro(input: Omit<MicroExercise, 'id' | 'createdAt'>): MicroExercise {

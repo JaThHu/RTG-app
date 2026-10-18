@@ -2,6 +2,7 @@ import { StrictMode } from 'react';
 import { createRoot } from 'react-dom/client';
 import { HashRouter } from 'react-router-dom';
 import { App } from './App';
+import { startSnapshotSync } from './lib/snapshot';
 import './styles/tokens.css';
 import './styles/base.css';
 import './styles/components.css';
@@ -17,6 +18,8 @@ createRoot(container).render(
     </HashRouter>
   </StrictMode>,
 );
+
+startSnapshotSync();
 
 // Service Worker registrieren, damit die App offline und vom Homescreen läuft.
 if ('serviceWorker' in navigator && import.meta.env.PROD) {

@@ -12,6 +12,7 @@ import { MicroPage } from './pages/MicroPage';
 import { StatsPage } from './pages/StatsPage';
 import { MorePage } from './pages/MorePage';
 import { TestsPage } from './pages/TestsPage';
+import { RemindersPage } from './pages/RemindersPage';
 import { HistoryPage } from './pages/HistoryPage';
 import { SessionDetailPage } from './pages/SessionDetailPage';
 
@@ -53,6 +54,7 @@ export function App() {
           <Route path="/stats" element={<StatsPage />} />
           <Route path="/mehr" element={<MorePage />} />
           <Route path="/mehr/tests" element={<TestsPage />} />
+          <Route path="/mehr/erinnerungen" element={<RemindersPage />} />
           <Route path="/verlauf" element={<HistoryPage />} />
           <Route path="/verlauf/:sessionId" element={<SessionDetailPage />} />
           <Route path="*" element={<Navigate to="/" replace />} />
